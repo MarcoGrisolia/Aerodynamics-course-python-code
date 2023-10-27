@@ -1,82 +1,74 @@
-import matplotlib.pyplot as plt
+import mpmath
+import math
+import decimal
 import numpy as np
+from sympy import *
+import matplotlib.pyplot as plt
 
-x_i = np.linspace(0,1,300)    
-
-input = "0015"
-
-digits = str(input).zfill(4)
-d1, d2, d3, d4 = map(int, digits)
-
-b = (d3 * 10 + d4) / 100
-p = d2 / 10
-m = d1 / 100
-
-def y_t_function(x):
-        return 5 * b * ((0.2969 * np.sqrt(x) - 0.1260 * x - 0.3516 * x**2 + 0.2843 * x**3 - 0.1015 * x**4))
-
-y_t = y_t_function(x_i)
-
-# Define two functions
-def function1(x, m, p):
-    return (m / (p**2)) * (2 * p * x - x**2)
-
-def function2(x, m, p):
-    return (m / ((1 - p)**2)) * ((1 - 2 * p) + 2 * p * x - x**2)
-
-def dy_over_dx_function1(x, p, m):
-    return ((2 * m) / (p**2) * (p - x))
-def dy_over_dx_function2(x, p, m):
-    return ((2 * m) / (1 - p**2) * (p - x))
-def function2(x, m, p):
-    return (m / ((1 - p)**2)) * ((1 - 2 * p) + 2 * p * x - x**2)
-def dy_over_dx_function2(x, p, m):
-    return ((2 * m) / (1 - p**2) * (p - x))
+import mpmath
+import math
+import decimal
+import numpy as np
+from sympy import *
 
 
-# Create an array of boolean values indicating where x falls between two values
-condition1 = (x_i >= 0) & (x_i < p)
-condition2 = (x_i >= p) & (x_i <= 1)            
+t=symbols('t')
+toft = [1/sqrt(1 + 4*Pow(t,2)), 2*t/sqrt(1 + 4*Pow(t,2))]
 
-y_c = np.zeros(len(x_i))          # Initialize an array to store the y_c values
-dy_over_dx = np.zeros(len(x_i))
+tprimet = [diff(toft[0],t), diff(toft[1],t)]
 
-# Calculate y_c values based on the condition
-if p != 0:
-    y_c[condition1] = function1(x_i[condition1], m, p)
-    dy_over_dx[condition1] = dy_over_dx_function1(x_i[condition1], p, m)
-    y_c[condition2] = function2(x_i[condition2], m, p)
-    dy_over_dx[condition2] = dy_over_dx_function2(x_i[condition2], p, m)
-else:
-    y_c[condition2] = function2(x_i[condition2], m, p)
-    dy_over_dx[condition2] = dy_over_dx_function2(x_i[condition2], p, m)
+noft = [tprimet[0]/sqrt(Pow(tprimet[0],2) + Pow(tprimet[1],2)), tprimet[1]/sqrt(Pow(tprimet[0],2) + Pow(tprimet[1],2))]
 
+import matplotlib.pyplot as plt
+#setup our t values array
+t_values = np.linspace(-4,4,100)
 
-theta = np.arctan(dy_over_dx)
+#define the r(t) vector value function
+roft = [t, t**2]
 
-if d1 + d2 == 0:
-    x_U = x_i
-    x_L = x_i
-    y_U = y_t
-    y_L = -y_t
-    
-else:
-    x_U = x_i - y_t * np.sin(theta)
-    x_L = x_i + y_t * np.sin(theta)
-    y_U = y_c + y_t * np.cos(theta)
-    y_L = y_c - y_t * np.cos(theta)
+#turn our r(t) vector value symbolic math function into a python function
+r_value_functions = [lambdify(t, roft[0]), lambdify(t, roft[1])]
 
-    
+#turn our T(t) vector value symbolic math function into a python function
+tangent_value_functions = [lambdify(t, toft[0]), lambdify(t, toft[1])]
 
+#turn our N(t) vector value symbolic math function into a python function
+normal_value_functions = [lambdify(t, noft[0]), lambdify(t, noft[1])]
 
+#plot r(t)
+plt.plot(r_value_functions[0](t_values), r_value_functions[1](t_values))
 
-#Create the plot
-plt.plot(x_U, y_U)
-plt.plot(x_L, y_L)
-plt.legend()
+#We are going to plot the vectors at the location of x=2 (which means t=2)
+#plot the tangent unit vector in green
+plt.quiver(r_value_functions[0](2),r_value_functions[1](2),tangent_value_functions[0](2),tangent_value_functions[1](2),color='g')
+
+#plot the normal unit vector in red
+plt.quiver(r_value_functions[0](2),r_value_functions[1](2),normal_value_functions[0](2),normal_value_functions[1](2),color='r')
+
+#make sure that our axis grids are equal so that we can clearly see the perpendicular geometry of the Normal Vector and the tangent geometry of the Tangent Vector.
 plt.axis('equal')
-plt.grid(True)
+plt.grid()
 
-
-# Show the plot
+#plot it
 plt.show()
+
+
+
+
+
+
+
+# plt.quiver(X, Y, U, V, scale=6, color='blue', width=0.005)
+
+# # Add labels and a title
+# plt.xlabel('X-Axis')
+# plt.ylabel('Y-Axis')
+# plt.title('Vector Field (Quiver Plot)')
+
+
+
+
+# # Show the plot
+# plt.axis('equal')
+# plt.grid(True)
+# plt.show()
