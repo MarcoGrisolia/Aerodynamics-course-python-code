@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-x_i = np.linspace(0,1,300)    
+x_i = np.linspace(0,1,500)    
 
-input = "0015"
+input = "2915"
 
 digits = str(input).zfill(4)
 d1, d2, d3, d4 = map(int, digits)
