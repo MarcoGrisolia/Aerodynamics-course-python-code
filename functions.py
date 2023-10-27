@@ -1,5 +1,9 @@
-import matplotlib.pyplot as plt
+import mpmath
+import math
+import decimal
 import numpy as np
+from sympy import *
+import matplotlib.pyplot as plt
 
 class Functions():
     def Circle(self, radius = 1, steps = 500):
@@ -23,20 +27,21 @@ class Functions():
         return X, Y, U, V
         
 
-    def CurrentLineFunction(self):
+    def FlowLineFunction(self):
         X, Y, U, V = self.SimpleVectorField()
-        new_X = X + U
-        new_y = Y + V
-        
+
+    def make_norm(vector_value_function):
+        return sqrt(Pow(vector_value_function[0],2) + Pow(vector_value_function[1],2))
 
 
 
 
 
+
+x = symbols('x')
 
 
 f = Functions()
-
 X, Y, U, V = f.SimpleVectorField(0, 0.3)
 
 
@@ -44,7 +49,7 @@ plt.plot(f.Circle()[0], f.Circle()[1])
 
 
 plt.quiver(X, Y, U, V, scale=7, color='blue', width=0.005)
-f.CurrentLineFunction()
+f.FlowLineFunction()
 # Add labels and a title
 plt.xlabel('X-Axis')
 plt.ylabel('Y-Axis')
@@ -52,6 +57,6 @@ plt.title('Vector Field (Quiver Plot)')
 
 
 # Show the plot
-# plt.axis('equal')
-# plt.grid(True)
-# plt.show()
+plt.axis('equal')
+plt.grid(True)
+plt.show()
