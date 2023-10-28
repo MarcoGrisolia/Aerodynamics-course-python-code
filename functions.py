@@ -5,67 +5,9 @@ import numpy as np
 from sympy import *
 import matplotlib.pyplot as plt
 
+
+
 class Functions():
-    def Circle(self, radius = 1, steps = 500):
-        theta = np.linspace(-np.pi, np.pi, steps)    
-        x = radius * np.cos(theta)
-        y = radius * np.sin(theta)
-        return x,y
-    
-    def SimpleVectorField(self, AoA = 0, intensity = 1, grid_points = 6, x_extension = [-3,3], y_extension = [-3,3]):
-        U_constant = intensity * np.cos(AoA)
-        V_constant = intensity * np.sin(AoA)
-        x = np.linspace(x_extension[0],x_extension[1], grid_points)
-        y = np.linspace(y_extension[0],y_extension[1], grid_points)
-        X, Y = np.meshgrid(x, y)
-
-        # Define vector components (U and V) at each grid point
-
-        U = U_constant * np.ones(grid_points ** 2)
-        V = V_constant * np.ones(grid_points ** 2)
-
-        return X, Y, U, V
-        
-
-    def simpleFlowLinefunction(self, field_extension = 6, steps = 100j):
-        # Creating different arrows
-
-        Y, X = np.mgrid[-field_extension:field_extension:steps, -field_extension:field_extension:steps]
-        U = np.full_like(X, 0)
-        V = np.full_like(X, 0.5)
-        module_speed = np.sqrt(U**2 + V**2)
-
-        return X , Y , U , V, module_speed
-    
-
-
-    def FlowLinefunction(self, function, field_extension = 1, steps = 3j):
-            # Creating different arrows
-            X, Y = np.mgrid[-field_extension:field_extension:steps, -field_extension:field_extension:steps]
-            
-            #f_U, f_V = self.differenctiateVelocityfrom_Psi(function)
-
-            
-
-            # U = f_U[X]
-            # V = np.full_like(Y, 0.5)
-
-
-            return X, Y
-
-
-
-    def differenctiateVelocityfrom_Psi(function = symbols('x') + symbols('y'), x = symbols('x'), y = symbols('y'), field_extension = 6, steps = 100):
-
-        z = function
-        f_U = - diff(z,y)
-        f_V = diff(z,x)
-
-        return f_U, f_V
-
-
-
-
 
     def compute_normal(self, y_of_x, x=symbols('x'), field_extension = 6, steps = 100):
 
@@ -95,42 +37,188 @@ class Functions():
     def make_norm(vector_value_function):
         return sqrt(Pow(vector_value_function[0],2) + Pow(vector_value_function[1],2))
 
+    def grid(self, field_extension = 10, steps = 500j):
+        Y, X = np.mgrid[-field_extension:field_extension:steps, -field_extension:field_extension:steps]
+        return Y, X
+
+    def Cylinder(self, radius = 1, steps = 500):
+        theta = np.linspace(-np.pi, np.pi, steps)    
+        x = radius * np.cos(theta)
+        y = radius * np.sin(theta)
+        return x,y
+    
+    def SimpleVelocityVectorField(self, AoA = 0, intensity = 1, field_extension = 10, steps = 500j):
+        U_constant = intensity * np.cos(AoA)
+        V_constant = intensity * np.sin(AoA)
+
+        Y, X = self.grid(field_extension, steps)
+
+        # Define vector components (U and V) at each grid point
+
+        U = U_constant * np.full_like(X, 1)
+        V = V_constant * np.full_like(Y, 0)
+
+        V_inf = sqrt(U[0][0]**2 + V[0][0]**2)
+
+        return X, Y, U, V, V_inf
+    
+    def differentiateVelocityfrom_Psi(self, function, x = symbols('x'), y = symbols('y')):
+
+        z = function
+        diff_U = diff(z,y)
+        diff_V = - diff(z,x)
+
+        return diff_U, diff_V
 
 
-x=symbols('x')
-y=symbols('y')
+    def flowLineVectorfield(self, psiFunction, field_extension = 10, steps = 500j):
+                    
 
-f = Functions()
+        x=symbols('x')
+        y=symbols('y')   
+        diff_U , diff_V = self.differentiateVelocityfrom_Psi(psiFunction)
 
+        f_U_function = lambdify([x,y], diff_U)
+        f_V_function = lambdify([x,y], diff_V)
 
-
-#X, Y, U, V = f.SimpleVectorField(10, 0.01,x_extension= [-10, 10], y_extension= [-10, 10])
-Psi = x**2 + y**2
-
-
-X, Y, U, V , speed = f.simpleFlowLinefunction(steps= 3j, field_extension=1)
-
+        Y, X = self.grid(field_extension, steps)
 
 
-# X, Y = f.FlowLinefunction(function= Psi, steps= 3j, field_extension=1)
+        #computes U vector 
+        f_U_vector = []
+        for i in range(0,len(X[0])):
+            f_U_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_U_function(X[i][j],Y[i][j])):
+                    f_U_raw.append(f_U_function(X[i][j],Y[i][j]))      
+                else:
+                    f_U_raw.append(0)   
+            f_U_vector.append(f_U_raw)
 
 
-print(U)
-print(V)
+
+        #computes V vector
+        f_V_vector = []
+        for i in range(0,len(X[0])):
+            f_V_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_V_function(X[i][j],Y[i][j])):
+                    f_V_raw.append(f_V_function(X[i][j],Y[i][j]))      
+                else:
+                    f_V_raw.append(0)   
 
 
-#plt.plot(f.Circle()[0], f.Circle()[1])
-#plt.quiver(X, Y, U, V, scale=7, color='blue', width=0.005)
-#plt.streamplot(X, Y, U, V, density = .5, color='blue', linewidth = None)
+            f_V_vector.append(f_V_raw)
 
 
-# # Add labels and a title
-# plt.xlabel('X-Axis')
-# plt.ylabel('Y-Axis')
-# plt.title('Vector Field (Quiver Plot)')
+
+        U = np.full_like(X, f_U_vector)
+        V = np.full_like(Y, f_V_vector)
 
 
-# # Show the plot
-# plt.axis('equal')
-# plt.grid(True)
-#plt.show()
+        return X, Y, U, V
+
+    def simpleSource_Sink(self, constant = 1,  field_extension = 10, steps = 500j):
+        
+        x=symbols('x')
+        y=symbols('y')
+        psiFunction = constant * atan(y/x)
+   
+        diff_U , diff_V = self.differentiateVelocityfrom_Psi(function= psiFunction)
+
+        f_U_function = lambdify([x,y], diff_U)
+        f_V_function = lambdify([x,y], diff_V)
+
+        Y, X = self.grid(field_extension, steps)
+
+
+        #computes U vector 
+        f_U_vector = []
+        for i in range(0,len(X[0])):
+            f_U_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_U_function(X[i][j],Y[i][j])):
+                    f_U_raw.append(f_U_function(X[i][j],Y[i][j]))      
+                else:
+                    f_U_raw.append(0)   
+            f_U_vector.append(f_U_raw)
+
+
+
+        #computes V vector
+        f_V_vector = []
+        for i in range(0,len(X[0])):
+            f_V_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_V_function(X[i][j],Y[i][j])):
+                    f_V_raw.append(f_V_function(X[i][j],Y[i][j]))      
+                else:
+                    f_V_raw.append(0)   
+
+
+            f_V_vector.append(f_V_raw)
+
+
+
+        U = np.full_like(X, f_U_vector)
+        V = np.full_like(Y, f_V_vector)
+
+
+        return X, Y, U, V        
+
+    def simpleDoublet(self, constant = 1,  field_extension = 10, steps = 500j):
+        
+        x=symbols('x')
+        y=symbols('y')
+        psiFunction = constant/(2*np.pi) * ( y / (x**2 + y**2))
+   
+        diff_U , diff_V = self.differentiateVelocityfrom_Psi(function= psiFunction)
+
+        f_U_function = lambdify([x,y], diff_U)
+        f_V_function = lambdify([x,y], diff_V)
+
+        Y, X = self.grid(field_extension, steps)
+
+
+        #computes U vector 
+        f_U_vector = []
+        for i in range(0,len(X[0])):
+            f_U_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_U_function(X[i][j],Y[i][j])):
+                    f_U_raw.append(f_U_function(X[i][j],Y[i][j]))      
+                else:
+                    f_U_raw.append(0)   
+            f_U_vector.append(f_U_raw)
+
+
+
+        #computes V vector
+        f_V_vector = []
+        for i in range(0,len(X[0])):
+            f_V_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_V_function(X[i][j],Y[i][j])):
+                    f_V_raw.append(f_V_function(X[i][j],Y[i][j]))      
+                else:
+                    f_V_raw.append(0)   
+
+
+            f_V_vector.append(f_V_raw)
+
+
+
+        U = np.full_like(X, f_U_vector)
+        V = np.full_like(Y, f_V_vector)
+
+
+        return X, Y, U, V
+
+
+
+
+
+
+
+
+
