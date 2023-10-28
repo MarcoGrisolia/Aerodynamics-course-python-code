@@ -5,10 +5,10 @@ import numpy as np
 from sympy import *
 import matplotlib.pyplot as plt
 
-x=symbols('x')
 
 
-# toft = [1/sqrt(1 + 4*Pow(t,2)), 2*t/sqrt(1 + 4*Pow(t,2))]
+
+# y = [1/sqrt(1 + 2*Pow(x,2)), 2*x/sqrt(1 + 4*Pow(x,2))]
 
 # tprimet = [diff(toft[0],t), diff(toft[1],t)]
 
@@ -34,26 +34,17 @@ x=symbols('x')
 
 
 def make_norm(vector_value_function):
-  return sqrt(Pow(vector_value_function[0],2) + Pow(vector_value_function[1],2))
+    return sqrt(Pow(vector_value_function[0],2) + Pow(vector_value_function[1],2))
 
 
 
+def computeVelocityfrom_Psi(function = symbols('x') + symbols('y'), x = symbols('x'), y = symbols('y'), field_extension = 6, steps = 100):
 
-def compute_normal_graph(x, y, x_min = -5, x_max = 5):
-  x_values = np.linspace(x_min, x_max ,100)
+    z = function
+    U = - diff(z,y)
+    V = diff(z,x)
 
-  y_prime = [diff(y[0],x), diff(y[1],x)]
-  tanvector = [y_prime[0]/make_norm(y_prime), y_prime[1]/make_norm(y_prime)]
-  tanprime = [diff(tanvector[0],x), diff(tanvector[1],x)]
-  normalvector = [tanprime[0]/make_norm(tanprime), tanprime[1]/make_norm(tanprime)]
-  normal_vector_functions = [lambdify(x, normalvector[0]),lambdify(x, normalvector[1])]
-  value_functions = [lambdify(x, y[0]), lambdify(x, y[1])]
-  plt.plot(value_functions[0](x_values), value_functions[1](x_values))
-
-  for i in range(1,len(x_values)):
-    if(i%5 == 0):
-      normal_location = x_values[i]
-      plt.quiver(value_functions[0](normal_location),value_functions[1](normal_location),normal_vector_functions[0](normal_location),normal_vector_functions[1](normal_location),color='r')
+    return U, V
 
 
 
@@ -61,35 +52,83 @@ def compute_normal_graph(x, y, x_min = -5, x_max = 5):
 
 
 
+x=symbols('x')
+y=symbols('y')
 
 
-def compute_tangent_graph(x, y, x_min = -5, x_max = 5):
-  x_values = np.linspace(x_min, x_max ,100)
+Psi = (atan(y/x) - y)
 
-  y_prime = [diff(y[0],x), diff(y[1],x)]
-  tanvector = [y_prime[0]/make_norm(y_prime), y_prime[1]/make_norm(y_prime)]
+f_U , f_V = computeVelocityfrom_Psi(Psi)
 
-  tan_vector_functions = [lambdify(x, tanvector[0]),lambdify(x, tanvector[1])]
-
-  value_functions = [lambdify(x, y[0]), lambdify(x, y[1])]
-  plt.plot(value_functions[0](x_values), value_functions[1](x_values))
-
-  for i in range(1,len(x_values)):
-    if(i%5 == 0):
-      normal_location = x_values[i]
-      plt.quiver(value_functions[0](normal_location),value_functions[1](normal_location),tan_vector_functions[0](normal_location),tan_vector_functions[1](normal_location),color='g')
+f_U_function = lambdify([x,y], f_U)
+f_V_function = lambdify([x,y], f_V)
 
 
 
-
-compute_tangent_graph(symbols('x'), [x, x**2])
-
-
+field_extension = 10
+steps = 300j
 
 
+Y, X = np.mgrid[-field_extension:field_extension:steps, -field_extension:field_extension:steps]
+
+# print(f_U)
+# print(f_U_function(2,4))
 
 
-# plt.quiver(X, Y, U, V, scale=6, color='blue', width=0.005)
+
+#computes U vector 
+
+f_U_vector = []
+for i in range(0,len(X[0])):
+    f_U_raw = []
+    for j in range(0,len(X[0])):
+      if not np.isnan(f_U_function(X[i][j],Y[i][j])):
+        f_U_raw.append(f_U_function(X[i][j],Y[i][j]))      
+      else:
+         f_U_raw.append(0)   
+
+    f_U_vector.append(f_U_raw)
+
+
+
+#computes V vector
+f_V_vector = []
+for i in range(0,len(X[0])):
+    f_V_raw = []
+    for j in range(0,len(X[0])):
+      if not np.isnan(f_V_function(X[i][j],Y[i][j])):
+        f_V_raw.append(f_V_function(X[i][j],Y[i][j]))      
+
+      else:
+         f_V_raw.append(0)   
+
+    f_V_vector.append(f_V_raw)
+
+
+
+
+
+
+U = np.full_like(X, f_U_vector)
+V = np.full_like(Y, f_V_vector)
+
+
+
+
+
+print(U)
+print(V)
+
+
+
+
+
+
+
+plt.streamplot(X, Y, U, V, density = 1, color='blue', linewidth = None)
+
+
+#plt.quiver(X, Y, U, V, scale=6, color='blue', width=0.005)
 
 # # Add labels and a title
 # plt.xlabel('X-Axis')
@@ -102,4 +141,4 @@ compute_tangent_graph(symbols('x'), [x, x**2])
 # # Show the plot
 # plt.axis('equal')
 # plt.grid(True)
-# plt.show()
+plt.show()
