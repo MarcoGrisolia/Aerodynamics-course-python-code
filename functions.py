@@ -4,10 +4,55 @@ import decimal
 import numpy as np
 from sympy import *
 import matplotlib.pyplot as plt
+from scipy import interpolate
+
 
 
 
 class Functions():
+
+    def compute_Circulation(self, a,b,x0,y0,numT,Vx,Vy,X,Y):
+        
+        t     = np.linspace(0,2*np.pi,numT)                                         # Discretized ellipse into angles [rad]
+        xC    = a*np.cos(t) + x0                                                    # X coordinates of ellipse
+        yC    = b*np.sin(t) + y0                                                    # Y coordinates of ellipse
+        fx    = interpolate.RectBivariateSpline(Y,X,Vx)                             # Interpolate X velocities from grid to ellipse points
+        fy    = interpolate.RectBivariateSpline(Y,X,Vy)                             # Interpolate Y velocities from grid to ellipse points
+        VxC   = fx.ev(yC,xC)                                                        # X velocity component on ellipse
+        VyC   = fy.ev(yC,xC)                                                        # Y velocity component on ellipse
+        Gamma = (np.trapz(VxC,xC) + np.trapz(VyC,yC))       #DELETED A NEGATIVE SIGN
+                                  # Compute integral using trapezoid rule
+        
+        return Gamma, xC, yC, VxC, VyC                          # Compute integral using trapezoid rule
+        
+        # FUNCTION - COMPUTE CIRCULATION
+        # Written by: JoshTheEngineer
+        # YouTube   : www.youtube.com/joshtheengineer
+        # Website   : www.joshtheengineer.com
+        # Started: 02/19/19
+        # Updated: 02/19/19 - Transferred from MATLAB to Python
+        #                   - Works as expected
+        #
+        # PURPOSE
+        # - Compute the circulation around the defined ellipse
+        # 
+        # INPUTS
+        # - a    : Horizontal axis half-length
+        # - b    : Vertical axis half-length
+        # - x0   : Ellipse center X coordinate
+        # - y0   : Ellipse center Y coordinate
+        # - steps : Number of points for integral
+        # - XX   : Meshgrid X values
+        # - YY   : Meshgrid Y values
+        #
+        # OUTPUTS
+        # - Gamma : Circulation [length^2/time]
+        # - xC    : X-values of integral curve [steps x 1]
+        # - yC    : Y-values of integral curve [steps x 1]
+        # - VxC   : Velocity X-component on integral curve [steps x 1]
+        # - VyC   : Velocity Y-component on integral curve [steps x 1]
+        return Gamma, x_c, y_C, Vx_c, Vy_C
+
 
     def compute_normal(self, y_of_x, x=symbols('x'), field_extension = 6, steps = 100):
 
@@ -70,6 +115,13 @@ class Functions():
 
         return diff_U, diff_V
 
+    def differentiateVelocityfrom_Phi(self, function, x = symbols('x'), y = symbols('y')):
+
+        z = function
+        diff_U = diff(z,x)
+        diff_V = diff(z,y)
+
+        return diff_U, diff_V        
 
     def flowLineVectorfield(self, psiFunction, field_extension = 10, steps = 500j):
                     
@@ -77,6 +129,53 @@ class Functions():
         x=symbols('x')
         y=symbols('y')   
         diff_U , diff_V = self.differentiateVelocityfrom_Psi(psiFunction)
+
+        f_U_function = lambdify([x,y], diff_U)
+        f_V_function = lambdify([x,y], diff_V)
+
+        Y, X = self.grid(field_extension, steps)
+
+
+        #computes U vector 
+        f_U_vector = []
+        for i in range(0,len(X[0])):
+            f_U_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_U_function(X[i][j],Y[i][j])):
+                    f_U_raw.append(f_U_function(X[i][j],Y[i][j]))      
+                else:
+                    f_U_raw.append(0)   
+            f_U_vector.append(f_U_raw)
+
+
+
+        #computes V vector
+        f_V_vector = []
+        for i in range(0,len(X[0])):
+            f_V_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_V_function(X[i][j],Y[i][j])):
+                    f_V_raw.append(f_V_function(X[i][j],Y[i][j]))      
+                else:
+                    f_V_raw.append(0)   
+
+
+            f_V_vector.append(f_V_raw)
+
+
+
+        U = np.full_like(X, f_U_vector)
+        V = np.full_like(Y, f_V_vector)
+
+
+        return X, Y, U, V
+
+    def potentialVectorfield(self, phiFunction, field_extension = 10, steps = 500j):
+                            
+
+        x=symbols('x')
+        y=symbols('y')   
+        diff_U , diff_V = self.differentiateVelocityfrom_Phi(phiFunction)
 
         f_U_function = lambdify([x,y], diff_U)
         f_V_function = lambdify([x,y], diff_V)
@@ -171,8 +270,11 @@ class Functions():
         x=symbols('x')
         y=symbols('y')
         psiFunction = constant/(2*np.pi) * ( y / (x**2 + y**2))
-   
+        phiFunction = constant/ (- 2*np.pi) * ( x / (x**2 + y**2))
+
+        #same thing
         diff_U , diff_V = self.differentiateVelocityfrom_Psi(function= psiFunction)
+        diff_U , diff_V = self.differentiateVelocityfrom_Phi(function= phiFunction)
 
         f_U_function = lambdify([x,y], diff_U)
         f_V_function = lambdify([x,y], diff_V)
@@ -213,7 +315,6 @@ class Functions():
 
 
         return X, Y, U, V
-
 
 
 
