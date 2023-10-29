@@ -100,8 +100,8 @@ class Functions():
 
         # Define vector components (U and V) at each grid point
 
-        U = U_constant * np.full_like(X, 1)
-        V = V_constant * np.full_like(Y, 0)
+        U =  np.full_like(X, U_constant)
+        V =  np.full_like(Y, V_constant)
 
         V_inf = sqrt(U[0][0]**2 + V[0][0]**2)
 

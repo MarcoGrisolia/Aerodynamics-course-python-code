@@ -16,25 +16,24 @@ b    = field_width / 2                                                          
 x0   = 0                                                                        # Ellipse center X coordinate
 y0   = 0                                                                        # Ellipse center Y coordinate
 numT = 400
-
+angle_of_attack = 0
 
 psi = 1 / (x**2 + y**2)
 
 
-X_velocityField, Y_velocityField, U_velocityField, V_velocityField, V_inf = f.SimpleVelocityVectorField(intensity= -flow_Velocity , field_extension= field_width, steps = accuracy_j)
+X_velocityField, Y_velocityField, U_velocityField, V_velocityField, V_inf = f.SimpleVelocityVectorField(AoA = angle_of_attack ,intensity= -flow_Velocity , field_extension= field_width, steps = accuracy_j)
 
 X_doublet, Y_doublet, U_doublet, V_doublet = f.simpleDoublet(constant= ((V_inf)*(circle_radius**2)*2*np.pi) , field_extension = field_width, steps= accuracy_j) #don'r forget to put j after steps
 
-X_doublet, Y_doublet, U_doublet, V_doublet = f.flowLineVectorfield(psi, field_width, accuracy_j)
+#X_doublet, Y_doublet, U_doublet, V_doublet = f.flowLineVectorfield(psi, field_width, accuracy_j)
 
-print(f"V_inf = {V_inf}")
+#print(f"V_inf = {V_inf}")
 
 
 #SUPERPOSITION OF SOLUTIONS
 Y, X = f.grid(field_width, accuracy_j)                                          #don't forget to add the parameter j 
-U = U_doublet + U_velocityField
-V = V_doublet + V_velocityField
-
+U =  U_velocityField + U_doublet
+V =  V_velocityField + V_doublet
 
 
 
