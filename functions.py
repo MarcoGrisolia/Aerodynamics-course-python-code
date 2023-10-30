@@ -5,6 +5,8 @@ import numpy as np
 from sympy import *
 import matplotlib.pyplot as plt
 from scipy import interpolate
+from scipy.integrate import quad
+from scipy.interpolate import RBFInterpolator
 
 
 
@@ -364,27 +366,38 @@ class Functions():
 
         return X, Y, U, V
 
-    def compute_Cp_from_velocity(self, U, V, V_inf):
-        V_tot = np.sqrt(U**2 + V**2)
+    #def compute_Cp_from_velocity(self, X, Y, U, V, a, b, numT, V_inf, x0 = 0, y0 = 0):
+        
+        theta = np.linspace(-np.pi, np.pi,numT)
+        xC    = a*np.cos(theta) + x0                                                                     # X coordinates of ellipse
+        yC    = b*np.sin(theta) + y0                                                                    # Y coordinates of ellipse
+
+        U_C    = interpolate.RectBivariateSpline(Y,X,U).ev(xC, yC)                             # Interpolate X velocities from grid to ellipse points
+        V_C    = interpolate.RectBivariateSpline(Y,X,V).ev(xC, yC)                             # Interpolate Y velocities from grid to ellipse points
+
+        print("U_C" , U_C)
+        print("U_C", V_C)
+
+        V_tot = np.sqrt(U_C**2 + V_C**2)
+
+        c_d =  1 - ((U_C/V_inf)**2)
+
+
+        c_l =  1 - ((V_C/V_inf)**2)
+
         c_p = 1 - ((V_tot/V_inf)**2)
 
-        return c_p
+        c_p_function_of_theta = interpolate.make_interp_spline(theta, c_p, k = 5) 
 
-    def compute_Lift_and_Drag_from_Cp(self, c_p, X, Y, numT, a, b, V_inf, x0 = 0, y0 = 0):
+        return c_p,  c_l, c_d , c_p_function_of_theta
+
+    #def compute_Lift_and_Drag_from_cl_cd(self, c_d, c_l, steps = 500):
+
+        t = np.linspace(0, 2*np.pi, steps)
+        Drag = np.trapz(c_d, t)
+        Lift = np.trapz(c_l, t)
         
-        t = np.linspace(0,2*np.pi,numT)
-        V_tot = V_inf * np.sqrt(1 - c_p)
-        U =  V_tot *np.cos(t) + x0
-        V =  V_tot *np.sin(t) + y0                                                                                # Discretized ellipse into angles [rad]
-        xC    = a*np.cos(t) + x0                                                    # X coordinates of ellipse
-        yC    = b*np.sin(t) + y0                                                    # Y coordinates of ellipse
-        fx    = interpolate.RectBivariateSpline(Y,X,U)                             # Interpolate X velocities from grid to ellipse points
-        fy    = interpolate.RectBivariateSpline(Y,X,V)                             # Interpolate Y velocities from grid to ellipse points
-        U_C   = fx.ev(xC,yC)                                                        # X velocity component on ellipse
-        V_C   = fy.ev(xC,yC)
-        L = np.trapz(V_C, yC)
-        D = np.trapz(U_C, xC)
-
-        return L , D 
+        return Lift , Drag
 
 
+        return (1.814 * x - 0.271 * x**3 - 0.0471 * x**5)**2
