@@ -11,17 +11,17 @@ from scipy import interpolate
 
 class Functions():
 
-    def compute_Circulation(self, a,b,x0,y0,numT,Vx,Vy,X,Y):
+    def compute_Circulation(self, a,b,x0,y0,numT,U,V,X,Y):
         
         t     = np.linspace(0,2*np.pi,numT)                                         # Discretized ellipse into angles [rad]
         xC    = a*np.cos(t) + x0                                                    # X coordinates of ellipse
         yC    = b*np.sin(t) + y0                                                    # Y coordinates of ellipse
-        fx    = interpolate.RectBivariateSpline(Y,X,Vx)                             # Interpolate X velocities from grid to ellipse points
-        fy    = interpolate.RectBivariateSpline(Y,X,Vy)                             # Interpolate Y velocities from grid to ellipse points
+        fx    = interpolate.RectBivariateSpline(Y,X,U)                             # Interpolate X velocities from grid to ellipse points
+        fy    = interpolate.RectBivariateSpline(Y,X,V)                             # Interpolate Y velocities from grid to ellipse points
         VxC   = fx.ev(yC,xC)                                                        # X velocity component on ellipse
         VyC   = fy.ev(yC,xC)                                                        # Y velocity component on ellipse
-        Gamma = (np.trapz(VxC,xC) + np.trapz(VyC,yC))       #DELETED A NEGATIVE SIGN
-                                  # Compute integral using trapezoid rule
+        Gamma = (np.trapz(VxC,xC) + np.trapz(VyC,yC))                               #DELETED A NEGATIVE SIGN
+                                                                                    # Compute integral using trapezoid rule
         
         return Gamma, xC, yC, VxC, VyC                          # Compute integral using trapezoid rule
         
@@ -265,6 +265,54 @@ class Functions():
 
         return X, Y, U, V        
 
+    def simpleIrrotational_Vortex(self, gamma_over2pi = 1, field_extension = 10, steps = 500j ):
+        
+        x=symbols('x')
+        y=symbols('y')
+        phiFunction = gamma_over2pi * atan(y/x)
+   
+        diff_U , diff_V = self.differentiateVelocityfrom_Phi(function= phiFunction)
+
+        f_U_function = lambdify([x,y], diff_U)
+        f_V_function = lambdify([x,y], diff_V)
+
+        Y, X = self.grid(field_extension, steps)
+
+
+        #computes U vector 
+        f_U_vector = []
+        for i in range(0,len(X[0])):
+            f_U_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_U_function(X[i][j],Y[i][j])):
+                    f_U_raw.append(f_U_function(X[i][j],Y[i][j]))      
+                else:
+                    f_U_raw.append(0)   
+            f_U_vector.append(f_U_raw)
+
+
+
+        #computes V vector
+        f_V_vector = []
+        for i in range(0,len(X[0])):
+            f_V_raw = []
+            for j in range(0,len(X[0])):
+                if not np.isnan(f_V_function(X[i][j],Y[i][j])):
+                    f_V_raw.append(f_V_function(X[i][j],Y[i][j]))      
+                else:
+                    f_V_raw.append(0)   
+
+
+            f_V_vector.append(f_V_raw)
+
+
+
+        U = np.full_like(X, f_U_vector)
+        V = np.full_like(Y, f_V_vector)
+
+
+        return X, Y, U, V        
+
     def simpleDoublet(self, constant = 1,  field_extension = 10, steps = 500j):
         
         x=symbols('x')
@@ -316,10 +364,27 @@ class Functions():
 
         return X, Y, U, V
 
+    def compute_Cp_from_velocity(self, U, V, V_inf):
+        V_tot = np.sqrt(U**2 + V**2)
+        c_p = 1 - ((V_tot/V_inf)**2)
 
+        return c_p
 
+    def compute_Lift_and_Drag_from_Cp(self, c_p, X, Y, numT, a, b, V_inf, x0 = 0, y0 = 0):
+        
+        t = np.linspace(0,2*np.pi,numT)
+        V_tot = V_inf * np.sqrt(1 - c_p)
+        U =  V_tot *np.cos(t) + x0
+        V =  V_tot *np.sin(t) + y0                                                                                # Discretized ellipse into angles [rad]
+        xC    = a*np.cos(t) + x0                                                    # X coordinates of ellipse
+        yC    = b*np.sin(t) + y0                                                    # Y coordinates of ellipse
+        fx    = interpolate.RectBivariateSpline(Y,X,U)                             # Interpolate X velocities from grid to ellipse points
+        fy    = interpolate.RectBivariateSpline(Y,X,V)                             # Interpolate Y velocities from grid to ellipse points
+        U_C   = fx.ev(xC,yC)                                                        # X velocity component on ellipse
+        V_C   = fy.ev(xC,yC)
+        L = np.trapz(V_C, yC)
+        D = np.trapz(U_C, xC)
 
-
-
+        return L , D 
 
 
