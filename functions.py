@@ -366,37 +366,38 @@ class Functions():
 
         return X, Y, U, V
 
-    #def compute_Cp_from_velocity(self, X, Y, U, V, a, b, numT, V_inf, x0 = 0, y0 = 0):
+    def compute_Cp_from_velocity(self, X, Y, U, V, a, b, numT, V_inf, x0 = 0, y0 = 0):
         
         theta = np.linspace(-np.pi, np.pi,numT)
+
         xC    = a*np.cos(theta) + x0                                                                     # X coordinates of ellipse
         yC    = b*np.sin(theta) + y0                                                                    # Y coordinates of ellipse
 
         U_C    = interpolate.RectBivariateSpline(Y,X,U).ev(xC, yC)                             # Interpolate X velocities from grid to ellipse points
         V_C    = interpolate.RectBivariateSpline(Y,X,V).ev(xC, yC)                             # Interpolate Y velocities from grid to ellipse points
 
-        print("U_C" , U_C)
-        print("U_C", V_C)
 
         V_tot = np.sqrt(U_C**2 + V_C**2)
-
-        c_d =  1 - ((U_C/V_inf)**2)
-
-
-        c_l =  1 - ((V_C/V_inf)**2)
 
         c_p = 1 - ((V_tot/V_inf)**2)
 
         c_p_function_of_theta = interpolate.make_interp_spline(theta, c_p, k = 5) 
 
-        return c_p,  c_l, c_d , c_p_function_of_theta
+        return c_p, c_p_function_of_theta
 
-    #def compute_Lift_and_Drag_from_cl_cd(self, c_d, c_l, steps = 500):
-
-        t = np.linspace(0, 2*np.pi, steps)
-        Drag = np.trapz(c_d, t)
-        Lift = np.trapz(c_l, t)
+    def compute_Lift_and_Drag_from_cp(self, c_p, a, v_inf , rho = 1.225,steps = 500):
         
+
+
+        t = np.linspace( - np.pi / 2  , (3 * np.pi) / 2 , steps)
+
+        drag = np.trapz(c_p * a * np.cos(t) , t)
+        lift = np.trapz(c_p * a * np.sin(t), t)
+        
+        Drag = -  drag * 0.5 * rho * v_inf**2
+        Lift = - lift * 0.5 * rho * v_inf**2
+
+
         return Lift , Drag
 
 
