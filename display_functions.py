@@ -42,7 +42,7 @@ V =  V_velocityField + V_doublet
 
                                                                           # Display circulation result
 
-X_vortex, Y_vortex, U_vortex, V_vortex = f.simpleIrrotational_Vortex( gamma_over2pi= 2 , field_extension = field_width, steps= accuracy_j)
+X_vortex, Y_vortex, U_vortex, V_vortex = f.simpleIrrotational_Vortex( gamma_over2pi= 1 , field_extension = field_width, steps= accuracy_j)
 
 
 U =  U + U_vortex  
@@ -68,7 +68,7 @@ print("Drag: ", D)
 
 #PLOTTING THE STREAMLINES
 plt.plot(f.Cylinder(circle_radius)[0], f.Cylinder(circle_radius)[1])
-plt.streamplot(X, Y, U , V, density= 2)
+plt.streamplot(X, Y, U , V, density= 4)
 plt.axis('equal')
 plt.grid(True)
 plt.show()
