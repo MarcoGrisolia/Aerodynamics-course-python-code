@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.integrate import quad
 from scipy.interpolate import RBFInterpolator
+import sympy as sp
 
 
 
@@ -55,8 +56,8 @@ class Functions():
         # - VyC   : Velocity Y-component on integral curve [steps x 1]
         return Gamma, x_c, y_C, Vx_c, Vy_C
 
-
     def compute_normal(self, y_of_x, x=symbols('x'), field_extension = 6, steps = 100):
+
 
         t_values = np.linspace(- field_extension ,field_extension ,steps)
         y = y_of_x
@@ -79,7 +80,6 @@ class Functions():
             V.append(normal_vector_functions[1](normal_location))
 
         return X, Y, U, V
-
 
     def make_norm(vector_value_function):
         return sqrt(Pow(vector_value_function[0],2) + Pow(vector_value_function[1],2))
@@ -386,6 +386,7 @@ class Functions():
         return c_p, c_p_function_of_theta
 
     def compute_Lift_and_Drag_from_cp(self, c_p, a, v_inf , rho = 1.225,steps = 500):
+
         
 
 

@@ -78,16 +78,16 @@ f_1 = np.cos(t)
 f_3 = np.sin(t)
 
 # Calculate F_y and F_x
-F_y = c_p * np.sin(t)
-F_x = c_p * np.cos(t)
+cp_y = c_p * np.sin(t)
+cp_x = c_p * np.cos(t)
 
 # Calculate the magnitude of the force vector
-F_tot = np.sqrt(F_x**2 + F_y**2)
+F_tot = np.sqrt(cp_x**2 + cp_y**2)
 
 
 
 axs[1].plot(f.Cylinder(circle_radius)[0], f.Cylinder(circle_radius)[1])
-axs[1].quiver(f_1, f_3, F_x, F_y)
+axs[1].quiver(f_1, f_3, cp_x, cp_y)
 axs[1].axis('equal')
 axs[1].grid(True)
 
