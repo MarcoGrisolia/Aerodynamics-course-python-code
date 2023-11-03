@@ -267,11 +267,11 @@ class Functions():
 
         return X, Y, U, V        
 
-    def simpleIrrotational_Vortex(self, gamma_over2pi = 1, field_extension = 10, steps = 500j ):
+    def simpleIrrotational_Vortex(self, gamma_over2pi = 1, field_extension = 10, steps = 500j , x0 = 0, y0 =0):
         
         x=symbols('x')
         y=symbols('y')
-        phiFunction = gamma_over2pi * atan(y/x)
+        phiFunction = gamma_over2pi * atan2(y - y0,x - x0)
    
         diff_U , diff_V = self.differentiateVelocityfrom_Phi(function= phiFunction)
 
@@ -314,6 +314,10 @@ class Functions():
 
 
         return X, Y, U, V        
+
+
+
+
 
     def simpleDoublet(self, constant = 1,  field_extension = 10, steps = 500j):
         
