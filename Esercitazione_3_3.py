@@ -48,7 +48,7 @@ X_vortex, Y_vortex, U_vortex, V_vortex = f.simpleIrrotational_Vortex( gamma_over
 U =  U + U_vortex  
 V =  V + V_vortex
 
-Gamma, xC, yC, UC, VC = f.compute_Circulation(circle_radius,circle_radius,x0,y0,accuracy,U,V,X,Y)       # Call circulation calculation
+Gamma, xC, yC, UC, VC = f.compute_Circulation(U,V,X,Y)       # Call circulation calculation
 print("Circulation: ", Gamma) 
 # %% CALCULATIONS                                               
 

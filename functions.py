@@ -8,13 +8,15 @@ from scipy import interpolate
 from scipy.integrate import quad
 from scipy.interpolate import RBFInterpolator
 import sympy as sp
+import cmath
+ 
 
 
 
 
 class Functions():
 
-    def compute_Circulation(self, a,b,x0,y0,numT,U,V,X,Y):
+    def compute_Circulation(self,U,V,X,Y,x0 = 0, y0 = 0, a = 1 , b = 1 , numT = 500):
         
         t     = np.linspace(0,2*np.pi,numT)                                         # Discretized ellipse into angles [rad]
         xC    = a*np.cos(t) + x0                                                    # X coordinates of ellipse
@@ -81,12 +83,17 @@ class Functions():
 
         return X, Y, U, V
 
-    def make_norm(vector_value_function):
+    def make_norm(self, vector_value_function):
         return sqrt(Pow(vector_value_function[0],2) + Pow(vector_value_function[1],2))
 
     def grid(self, field_extension = 10, steps = 500j):
         Y, X = np.mgrid[-field_extension:field_extension:steps, -field_extension:field_extension:steps]
         return Y, X
+
+    def complex_grid(self, field_extension = 10, steps = 500j):
+        X, Y = self.grid(field_extension, steps)
+        Z = X + 1j * Y
+        return Z
 
     def Cylinder(self, radius = 1, steps = 500):
         theta = np.linspace(-np.pi, np.pi, steps)    
@@ -316,9 +323,6 @@ class Functions():
         return X, Y, U, V        
 
 
-
-
-
     def simpleDoublet(self, constant = 1,  field_extension = 10, steps = 500j):
         
         x=symbols('x')
@@ -391,6 +395,7 @@ class Functions():
 
     def compute_Lift_and_Drag_from_cp(self, c_p, a, v_inf , rho = 1.225,steps = 500):
 
+
         
 
 
@@ -407,3 +412,42 @@ class Functions():
 
 
         return (1.814 * x - 0.271 * x**3 - 0.0471 * x**5)**2
+    
+    def K_J_transform(self, Xc, Yc, circle_radius, lenght = 1):
+
+        Beta = np.arcsin((Yc)/(circle_radius))
+        b = circle_radius * np.cos(Beta) - Xc
+        e = Xc / b
+        t_max = 1.3 * e * lenght
+
+        return b, Beta, e, t_max
+    
+    def flowFieldCylinder(self,circle_radius = 1, field_extension = 10, accuracy_j = 500j, accuracy = 500, angle_of_attack = 0, flow_Velocity = 1 , x0 = 0 , y0 = 0):
+
+
+        X_velocityField, Y_velocityField, U_velocityField, V_velocityField, V_inf = self.SimpleVelocityVectorField(AoA = angle_of_attack ,intensity= -flow_Velocity , field_extension= field_extension, steps = accuracy_j)
+        X_doublet, Y_doublet, U_doublet, V_doublet = self.simpleDoublet(constant= ((V_inf)*(circle_radius**2)*2*np.pi) , field_extension = field_extension, steps= accuracy_j)  #don'r forget to put j after steps
+
+
+        # Create grid                                                                           # Number of Y points
+        X      = np.linspace(-field_extension,field_extension,accuracy)                         # X-point array
+        Y      = np.linspace(-field_extension,field_extension,accuracy)                         # Y-point array    
+
+        #SUPERPOSITION OF SOLUTIONS                                                          
+        U =  U_velocityField + U_doublet  
+        V =  V_velocityField + V_doublet
+
+                                                                                # Display circulation result
+
+        X_vortex, Y_vortex, U_vortex, V_vortex = self.simpleIrrotational_Vortex( gamma_over2pi= circle_radius*flow_Velocity , field_extension = field_extension, steps= accuracy_j)
+
+        U =  U + U_vortex  
+        V =  V + V_vortex
+
+        Gamma, xC, yC, UC, VC = self.compute_Circulation(U,V,X,Y, x0 = x0, y0=y0, a= circle_radius, b= circle_radius, numT=accuracy)
+
+        c_p , cp_function = self.compute_Cp_from_velocity(X,Y,U,V, circle_radius, circle_radius, accuracy, flow_Velocity)
+
+        L, D = self.compute_Lift_and_Drag_from_cp(c_p, circle_radius, flow_Velocity, steps= accuracy)
+
+        return X , Y , U , V , Gamma, L, D
