@@ -95,10 +95,10 @@ class Functions():
         Z = X + 1j * Y
         return Z
 
-    def Cylinder(self, radius = 1, steps = 500):
+    def Cylinder(self, radius = 1, steps = 500, xC =0, yC = 0):
         theta = np.linspace(-np.pi, np.pi, steps)    
-        x = radius * np.cos(theta)
-        y = radius * np.sin(theta)
+        x = radius * np.cos(theta) + xC
+        y = radius * np.sin(theta) + yC
         return x,y
     
     def SimpleVelocityVectorField(self, AoA = 0, intensity = 1, field_extension = 10, steps = 500j):
@@ -425,6 +425,7 @@ class Functions():
     def flowFieldCylinder(self,circle_radius = 1, field_extension = 10, accuracy_j = 500j, accuracy = 500, angle_of_attack = 0, flow_Velocity = 1 , x0 = 0 , y0 = 0):
 
 
+
         X_velocityField, Y_velocityField, U_velocityField, V_velocityField, V_inf = self.SimpleVelocityVectorField(AoA = angle_of_attack ,intensity= -flow_Velocity , field_extension= field_extension, steps = accuracy_j)
         X_doublet, Y_doublet, U_doublet, V_doublet = self.simpleDoublet(constant= ((V_inf)*(circle_radius**2)*2*np.pi) , field_extension = field_extension, steps= accuracy_j)  #don'r forget to put j after steps
 
@@ -451,3 +452,8 @@ class Functions():
         L, D = self.compute_Lift_and_Drag_from_cp(c_p, circle_radius, flow_Velocity, steps= accuracy)
 
         return X , Y , U , V , Gamma, L, D
+    
+    def z_cylinder(self, circle_radius = 1, zc = 0 + 0j, steps = 500):
+        theta = np.linspace(0, 2*np.pi, steps)
+        z_cylinder = zc + circle_radius*np.exp(1j*theta)
+        return z_cylinder

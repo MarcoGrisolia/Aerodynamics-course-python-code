@@ -1,47 +1,111 @@
 from functions import *
+from mpl_toolkits.mplot3d import axes3d
 
 f = Functions()
 
 Vinf = 1
-C_x = .056
-C_y = .056
-radius = 1
-AoA = np.pi/18
-Zc = 0
+C_x = .15
+C_y = .15
+radius = 2
+angle = 10
+AoA = np.deg2rad(angle)
+Zc = C_x + 1j * C_y
 accuracy = 500
+field_ext = 2 * radius
+rho = 997
 
 thetaprime = np.linspace(0,2*np.pi, accuracy)
 
 
 b, Beta, e, t_max = f.K_J_transform(C_x, C_y, radius)
-print(b)
-
-Z = f.complex_grid()
-
-#X , Y , U , V , Gamma, L, D = f.flowFieldCylinder(circle_radius= radius, angle_of_attack=AoA, field_extension=3)
-
-X, Y = f.grid(field_extension=3)
-
-a = (b / np.cos(Beta))
-
-Gamma = -(2* Vinf * np.sin(np.pi + Beta + AoA)*(2*np.pi*a))
-
-print(Gamma)
-
-W = - Vinf * (((Z - Zc) * np.exp(1j * AoA)) + ((a**2) *np.exp(-1j * AoA)) / (Z - Zc)) - (1j*Gamma * (np.log((Z- Zc)/a)))/(2*np.pi)
-
-V = 2* Vinf * np.sin(thetaprime + AoA) + (Gamma/(2*np.pi*a))
 
 
-phi = np.real(W)
-psi = np.imag(W) 
+Z = np.array(f.complex_grid(field_extension=field_ext))
 
-plt.figure(figsize=(12, 5))
 
-plt.subplot(1, 2, 1)
-plt.plot(f.Cylinder(radius)[0], f.Cylinder(radius)[1])
-plt.contour(X, Y, psi, 70, color = "r")
-plt.axis('equal')
 
+
+X, Y = f.grid(field_extension=field_ext)
+
+
+z_cilinder = f.z_cylinder(circle_radius= radius, zc = Zc, steps=accuracy)
+
+zita_airfoil = z_cilinder + (b**2) / np.array(z_cilinder) 
+
+zita = np.full_like(Z, 0)
+
+for i in range(len(Z)):
+    for j in range(len(Z)):
+        if np.abs(Z[i][j] - Zc) >= radius:
+            zita[i][j] = Z[i][j] + (b**2) / (Z[i][j])
+
+        else :
+            zita[i][j] = nan
+        
+
+
+
+Gamma = -(2* Vinf * np.sin(np.pi + Beta + AoA)*(2*np.pi*radius))
+
+
+
+def W(t, s):
+    return -Vinf * (((t - s) * np.exp(1j * AoA)) + ((radius ** 2) * np.exp(-1j * AoA)) / (t - s)) - (
+            (1j * Gamma * (np.log((t - s) / radius))) / (2 * np.pi))
+    
+
+V = 2* Vinf * np.sin(thetaprime + AoA) + (Gamma/(2*np.pi*radius))
+
+zitaC = Zc + (b**2)/Zc
+
+V_zita = V / (abs(1 - b**2)/(Z**2)) 
+
+cp = 1 - (V_zita / Vinf)**2
+
+
+phi = np.real(W(Z, Zc))
+psi = np.imag(W(Z, Zc)) 
+
+
+eps = np.real(zita)
+eta = np.imag(zita)
+
+
+
+
+alpha = np.linspace(-10, 10, 20)
+
+Gamma_1 = -(2* Vinf * np.sin(np.pi + Beta + np.deg2rad(alpha))*(2*np.pi*radius))
+
+Lift = rho * Vinf * Gamma_1
+
+cl_zita = Lift / (0.5 * rho * Vinf**2 * 4*b)
+
+
+fig, axs = plt.subplots(2,2)
+
+axs[0,0].set_title("Cylider flow")
+axs[0,0].plot(np.real(z_cilinder), np.imag(z_cilinder))
+axs[0,0].contour(X, Y, psi * ((X - C_x)**2 + (Y-C_y)**2 > radius**2),  np.linspace(-3,3,50) , colors = '#A2142F')
+axs[0,0].axis("equal")
+axs[0,0].grid(True)
+
+axs[0,1].set_title("Airfoil flow")
+axs[0,1].plot(np.real(zita_airfoil), np.imag(zita_airfoil))
+axs[0,1].contour(eps, eta, psi, np.linspace(-3,3,50),  colors = '#A2142F')
+axs[0,1].axis('equal')
+axs[0,1].grid(True)
+
+
+axs[1,0].set_title("Cl vs alpha")
+axs[1,0].plot(np.deg2rad(alpha), cl_zita)
+axs[1,0].axis('equal')
+axs[1,0].grid(True)
+
+
+axs[1,1].set_title("Cp vs eps")
+axs[1,1].plot(eps, cp)
+axs[1,1].axis('equal')
+axs[1,1].grid(True)
 
 plt.show()
