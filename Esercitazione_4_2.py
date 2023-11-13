@@ -11,18 +11,19 @@ angle = 10
 AoA = np.deg2rad(angle)
 Zc = C_x + 1j * C_y
 accuracy = 500
-field_ext = 2 * radius
+accuracyj = 500j
+field_ext = 3 * radius
 rho = 997
 
-thetaprime = np.linspace(0,2*np.pi, accuracy)
+thetaprime = np.linspace(- np.pi ,np.pi, accuracy)
 
 
 b, Beta, e, t_max = f.K_J_transform(C_x, C_y, radius)
 
 
-Z = np.array(f.complex_grid(field_extension=field_ext))
+Z = np.array(f.complex_grid(field_extension=field_ext, steps= accuracyj))
 
-
+zitaC = Zc + (b**2)/Zc
 
 
 X, Y = f.grid(field_extension=field_ext)
@@ -56,11 +57,12 @@ def W(t, s):
 
 V = 2* Vinf * np.sin(thetaprime + AoA) + (Gamma/(2*np.pi*radius))
 
-zitaC = Zc + (b**2)/Zc
 
-V_zita = V / (abs(1 - b**2)/(Z**2)) 
+V_zita = V / (abs((1 - b**2)/(Z**2))) 
 
 cp = 1 - (V_zita / Vinf)**2
+
+
 
 
 phi = np.real(W(Z, Zc))
@@ -82,6 +84,13 @@ Lift = rho * Vinf * Gamma_1
 cl_zita = Lift / (0.5 * rho * Vinf**2 * 4*b)
 
 
+if (eps.all() + eta.all() == zita_airfoil.all()):
+    print(f"zita {zita}")
+
+ 
+
+
+
 fig, axs = plt.subplots(2,2)
 
 axs[0,0].set_title("Cylider flow")
@@ -92,7 +101,7 @@ axs[0,0].grid(True)
 
 axs[0,1].set_title("Airfoil flow")
 axs[0,1].plot(np.real(zita_airfoil), np.imag(zita_airfoil))
-axs[0,1].contour(eps, eta, psi, np.linspace(-3,3,50),  colors = '#A2142F')
+axs[0,1].contour(eps, eta, psi, np.linspace(-field_ext,field_ext,50),  colors = '#A2142F')
 axs[0,1].axis('equal')
 axs[0,1].grid(True)
 
@@ -104,7 +113,7 @@ axs[1,0].grid(True)
 
 
 axs[1,1].set_title("Cp vs eps")
-axs[1,1].plot(eps, cp)
+axs[1,1].plot(eps, cp * (eps.all() + eta.all() == zita_airfoil.any()))
 axs[1,1].axis('equal')
 axs[1,1].grid(True)
 

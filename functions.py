@@ -12,11 +12,9 @@ import cmath
  
 
 
-
-
 class Functions():
 
-    def compute_Circulation(self,U,V,X,Y,x0 = 0, y0 = 0, a = 1 , b = 1 , numT = 500):
+    def compute_Circulation(self, a, b, x0, y0, numT, U,V,X,Y):
         
         t     = np.linspace(0,2*np.pi,numT)                                         # Discretized ellipse into angles [rad]
         xC    = a*np.cos(t) + x0                                                    # X coordinates of ellipse

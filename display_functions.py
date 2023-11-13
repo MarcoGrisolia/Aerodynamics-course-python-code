@@ -52,6 +52,7 @@ Gamma, xC, yC, UC, VC = f.compute_Circulation(circle_radius,circle_radius,x0,y0,
 print("Circulation: ", Gamma) 
 # %% CALCULATIONS                                               
 
+print(U)
 c_p , cp_function = f.compute_Cp_from_velocity(X,Y,U,V, circle_radius, circle_radius, accuracy, flow_Velocity)
 L, D = f.compute_Lift_and_Drag_from_cp(c_p, circle_radius, flow_Velocity, steps= accuracy)
 
