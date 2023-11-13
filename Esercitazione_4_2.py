@@ -60,9 +60,11 @@ V = 2* Vinf * np.sin(thetaprime + AoA) + (Gamma/(2*np.pi*radius))
 
 V_zita = V / (abs((1 - b**2)/(Z**2))) 
 
-cp = 1 - (V_zita / Vinf)**2
+V_cp = V / (abs((1 - b**2)/(Zc**2))) 
 
+print(V_cp)
 
+cp = 1 - (V_cp / Vinf)**2
 
 
 phi = np.real(W(Z, Zc))
@@ -84,10 +86,8 @@ Lift = rho * Vinf * Gamma_1
 cl_zita = Lift / (0.5 * rho * Vinf**2 * 4*b)
 
 
-if (eps.all() + eta.all() == zita_airfoil.all()):
-    print(f"zita {zita}")
-
- 
+print(cp)
+print(zita_airfoil)
 
 
 
@@ -95,7 +95,7 @@ fig, axs = plt.subplots(2,2)
 
 axs[0,0].set_title("Cylider flow")
 axs[0,0].plot(np.real(z_cilinder), np.imag(z_cilinder))
-axs[0,0].contour(X, Y, psi * ((X - C_x)**2 + (Y-C_y)**2 > radius**2),  np.linspace(-3,3,50) , colors = '#A2142F')
+axs[0,0].contour(X, Y, psi * ((X - C_x)**2 + (Y-C_y)**2 > radius**2),  np.linspace(-field_ext,field_ext,50) , colors = '#A2142F')
 axs[0,0].axis("equal")
 axs[0,0].grid(True)
 
@@ -113,7 +113,7 @@ axs[1,0].grid(True)
 
 
 axs[1,1].set_title("Cp vs eps")
-axs[1,1].plot(eps, cp * (eps.all() + eta.all() == zita_airfoil.any()))
+axs[1,1].plot(np.real(zita_airfoil), cp)
 axs[1,1].axis('equal')
 axs[1,1].grid(True)
 
