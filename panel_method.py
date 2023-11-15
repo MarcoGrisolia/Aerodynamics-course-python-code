@@ -1,33 +1,52 @@
+import numpy as np
 from functions import *
-from NacaEquation import *
+from NacaEquation import Nacavectors_inputs
 
-accuracy = np.linspace(0,1,5)
+f = Functions()
+
+accuracy = np.linspace(0, 1, 1000)
 Nacaprofile = '0015'
 
-x_U , x_L , y_U, y_L = Nacavectors_inputs(accuracy, Nacaprofile)
+x_U, x_L, y_U, y_L = Nacavectors_inputs(accuracy, Nacaprofile)
 
 x = np.concatenate((x_U, x_L[::-1]))
-
 y = np.concatenate((y_L[::-1], y_U))
 
 x_control = np.full_like(x, 0)
 y_control = np.full_like(y, 0)
 theta = np.full_like(x, 0)
-Beta = np.full_like(x, 0)
-r_ij = np.full_like(x, 0)
 
-for i in range(len(x) - 1):
-    x_control[i] = (x[i] + x[i+1])/2
-    y_control[i] = (y[i] + y[i+1])/2
+# Initialize Beta_ij and r_ij as empty lists
+Beta_ij = []
+r_ij = []
+
+#FIRST CYCLE FOR THE NUMBER OF PANELS
+
+for i in range(len(accuracy) - 1):
+    x_control[i] = (x[i] + x[i+1]) / 2
+    y_control[i] = (y[i] + y[i+1]) / 2
     theta[i] = np.arctan2(y[i] - y[i+1], x[i] - x[i+1])
-    Beta[i] = np.arctan2(((x[i] - x_control[i - 1])*(y[i + 1] - y_control[i - 1])) - ((y[i] - y_control[i - 1])*(x[i + 1] - x_control[i -1])), 
-                         ((x[i] - x_control[i - 1])*(x[i + 1] - x_control[i -1])) - ((y[i] - y_control[i -1])*(y[i + 1] - y_control[i - 1])))
 
-    #devi calcolare rij e  poi fare un altro for per farlo per tutti i pannelli
+    Beta = np.full_like(y, 0)
+    r = np.full_like(y, 0)
 
+    for j in range(len(accuracy) - 1):
+        Beta[j] = np.arctan2(((x[j] - x_control[i]) * (y[j + 1] - y_control[i])) - ((y[j] - y_control[i]) * (x[j + 1] - x_control[i])), ((x[j] - x_control[i]) * (x[j + 1] - x_control[i])) - ((y[j] - y_control[i]) * (y[j + 1] - y_control[i])))
+        r[j] = np.sqrt((y_control[i] - y[j])**2 + (x_control[i] - x[j])**2)
 
-print(f"Beta {Beta}")
+        if i == j:
+            Beta = np.abs(Beta)
 
+    # Append the calculated values to the lists
+    Beta_ij.append(Beta)
+    r_ij.append(r)
+
+# Convert the lists to NumPy arrays
+Beta_ij = np.array(Beta_ij)
+r_ij = np.array(r_ij)
+
+print(f"Beta_ij:\n{Beta_ij}")
+print(f"r_ij:\n{r_ij}")
 
 
 
