@@ -411,7 +411,7 @@ class Functions():
 
         return (1.814 * x - 0.271 * x**3 - 0.0471 * x**5)**2
     
-    def K_J_transform(self, Xc, Yc, circle_radius, lenght = 1):
+    def conform_transformation(self, Xc, Yc, circle_radius, lenght = 1):
 
         Beta = np.arcsin((Yc)/(circle_radius))
         b = circle_radius * np.cos(Beta) - Xc
@@ -452,6 +452,16 @@ class Functions():
         return X , Y , U , V , Gamma, L, D
     
     def z_cylinder(self, circle_radius = 1, zc = 0 + 0j, steps = 500):
-        theta = np.linspace(0, 2*np.pi, steps)
+        theta = np.linspace(-np.pi , np.pi, steps)
         z_cylinder = zc + circle_radius*np.exp(1j*theta)
         return z_cylinder
+
+    def conform_param(self, tmax, Beta = 0, chord = 1):
+
+        e = tmax / 1.3 * chord
+        b = chord/4
+        Xc = e * b
+        circle_radius = (b + Xc)/ np.cos(Beta)
+        Yc = circle_radius * np.sin(Beta) + Xc
+
+        return Xc, Yc, circle_radius, chord, e
