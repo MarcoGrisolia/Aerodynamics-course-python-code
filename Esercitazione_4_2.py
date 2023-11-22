@@ -4,9 +4,11 @@ from mpl_toolkits.mplot3d import axes3d
 f = Functions()
 
 Vinf = 1
-C_x = .15
-C_y = .15
-radius = 2
+
+C_x , C_y, radius , chord, e = f.conform_param(.15)
+
+
+
 angle = 10
 AoA = np.deg2rad(angle)
 Zc = C_x + 1j * C_y
@@ -17,8 +19,10 @@ rho = 997
 
 thetaprime = np.linspace(- np.pi ,np.pi, accuracy)
 
+theta = np.linspace(0 , 2 * np.pi, accuracy)
 
-b, Beta, e, t_max = f.K_J_transform(C_x, C_y, radius)
+
+b, Beta, e, t_max = f.conform_transformation(C_x, C_y, radius)
 
 
 Z = np.array(f.complex_grid(field_extension=field_ext, steps= accuracyj))
@@ -26,12 +30,19 @@ Z = np.array(f.complex_grid(field_extension=field_ext, steps= accuracyj))
 zitaC = Zc + (b**2)/Zc
 
 
-X, Y = f.grid(field_extension=field_ext)
+X, Y = f.grid(field_extension=field_ext, steps= accuracyj)
 
 
 z_cilinder = f.z_cylinder(circle_radius= radius, zc = Zc, steps=accuracy)
 
 zita_airfoil = z_cilinder + (b**2) / np.array(z_cilinder) 
+
+min_zita_airfoil = np.min(np.real(zita_airfoil))
+max_zita_airfoil = np.max(np.real(zita_airfoil))
+
+chord_lenght = max_zita_airfoil - min_zita_airfoil
+
+
 
 zita = np.full_like(Z, 0)
 
@@ -58,13 +69,10 @@ def W(t, s):
 V = 2* Vinf * np.sin(thetaprime + AoA) + (Gamma/(2*np.pi*radius))
 
 
-V_zita = V / (abs((1 - b**2)/(Z**2))) 
+V_airfoil = np.abs(V / np.abs(1 - ((b**2)/(z_cilinder**2))))
 
-V_cp = V / (abs((1 - b**2)/(Zc**2))) 
 
-print(V_cp)
-
-cp = 1 - (V_cp / Vinf)**2
+cp = 1 - (V_airfoil / Vinf)**2
 
 
 phi = np.real(W(Z, Zc))
@@ -86,12 +94,13 @@ Lift = rho * Vinf * Gamma_1
 cl_zita = Lift / (0.5 * rho * Vinf**2 * 4*b)
 
 
-print(cp)
-print(zita_airfoil)
+
+print(f"z_cilinder : \n {z_cilinder}")
+print(f"V_airfoil : \n {V_airfoil}")
 
 
 
-fig, axs = plt.subplots(2,2)
+fig, axs = plt.subplots(2,3)
 
 axs[0,0].set_title("Cylider flow")
 axs[0,0].plot(np.real(z_cilinder), np.imag(z_cilinder))
@@ -112,9 +121,18 @@ axs[1,0].axis('equal')
 axs[1,0].grid(True)
 
 
-axs[1,1].set_title("Cp vs eps")
-axs[1,1].plot(np.real(zita_airfoil), cp)
+axs[1,1].set_title("V/Vinf vs Eps")
+axs[1,1].plot(np.real(zita_airfoil) / (chord_lenght), V_airfoil  / Vinf,)
 axs[1,1].axis('equal')
 axs[1,1].grid(True)
+
+
+axs[1,2].set_title("Cp vs Eps")
+axs[1,2].plot(np.real(zita_airfoil) / (chord_lenght), cp)
+axs[1,2].axis('equal')
+axs[1,2].grid(True)
+axs[1,2].invert_yaxis()
+
+
 
 plt.show()
