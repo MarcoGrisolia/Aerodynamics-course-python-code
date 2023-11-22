@@ -4,7 +4,7 @@ from NacaEquation import Nacavectors_inputs
 
 f = Functions()
 
-accuracy = np.linspace(0, 1, 5)
+accuracy = np.linspace(0, 1, 1000)
 Nacaprofile = '0015'
 Vinf = 1
 AoA = np.deg2rad(0)
@@ -25,7 +25,6 @@ y= np.append(y_L[::-1], y_u)
 
 
 
-
 x_control = []
 y_control = []
 theta = []
@@ -34,30 +33,35 @@ theta = []
 Beta_ij = []
 r_ij = []
 
-
+N = len(x) - 1
 
 #FIRST CYCLE FOR THE NUMBER OF PANELS
-for i in range(1, len(x)):
-    x_control.append((x[i] + x[i-1]) / 2)
-    y_control.append((y[i] + y[i-1]) / 2)
-    theta.append(np.arctan2(y[i] - y[i-1], x[i] - x[i-1]))
+for i in range(N):
+    
+    x_control.append((x[i + 1] + x[i]) / 2)
+    y_control.append((y[i + 1] + y[i]) / 2)
+    theta.append(np.arctan2(y[i + 1] - y[i], x[i + 1] - x[i]))
 
     Beta_row = []
     r = []
     #OPERATIONS TO DO WITH EVERY PANEL
-    for j in range(len(x) - 1):
-        Beta_row.append(np.arctan2(((x[j] - x_control[i - 1]) * (y[j + 1] - y_control[i - 1])) - ((y[j] - y_control[i - 1]) * (x[j + 1] - x_control[i - 1])), ((x[j] - x_control[i - 1]) * (x[j + 1] - x_control[i - 1])) - ((y[j] - y_control[i - 1]) * (y[j + 1] - y_control[i - 1]))))
-        r.append(abs(y_control[i - 1] - y[j]) + abs((x_control[i - 1] - x[j])))
+    for j in range(N):
+        dx1 = x_control[i] - x[j]
+        dy1 = y_control[i] - y[j]
+        dx2 = x_control[i] - x[j + 1]
+        dy2 = y_control[i] - y[j + 1]
 
-        if i == j + 1:
+        Beta_row.append(np.arctan2(dy2 * dx1 - dx2 * dy1, dx1 * dx2 + dy1 * dy2))
+        r.append(np.sqrt(dx1**2 + dy1**2))
+
+        if i == j:
             Beta_row[j] = np.abs(Beta_row[j])
 
-
+    r.append(np.sqrt(dx2**2 + dy2**2))
 
     # Append the calculated values to the lists
     Beta_ij.append(Beta_row)
     r_ij.append(r)
-
 
 
 
@@ -76,49 +80,64 @@ theta = np.array(theta)
 
 A_i_j = []
 b = []
+A_i_j_lastRow = []
+lastValue = []
 
-for i in range(0 , len(Beta_ij)):
+for i in range(N):
 
     A_i_j_row = []
+    summ_value = 0
+    
+    for j in range(N):
 
-    for j in range(0 , len(Beta_ij)):
+        A_i_j_row.append( (1/(2*np.pi)) * ((np.log((r_ij[i][j + 1])/(r_ij[i][j])) * np.sin(theta[i] - theta[j])) + (Beta_ij[i][j] * np.cos(theta[i] - theta[j]))))
+        summ_value += ((np.log((r_ij[i][j + 1])/(r_ij[i][j])) * np.cos(theta[i] - theta[j])) - (Beta_ij[i][j] * np.sin(theta[i] - theta[j])))
+    
+        if i == N - 1:
+            A_i_j_lastRow.append(1/(2*np.pi) * (((Beta_ij[0][j] * np.sin(theta[0] - theta[j]) - (np.log((r_ij[0][j+1])/(r_ij[0][j]))) * np.cos(theta[0] - theta[j]))) + 
+                             ((Beta_ij[N - 1][j] * np.sin(theta[N - 1] - theta[j]) - (np.log((r_ij[N - 1][j+1])/(r_ij[N - 1][j]))) * np.cos(theta[N - 1] - theta[j])))))
 
-        A_i_j_row.append((np.log((r_ij[i - 1][j])/(r_ij[i- 1][j - 1])) * np.sin(theta[i- 1] - theta[j - 1])) + (Beta_ij[i- 1][j - 1] * np.cos(theta[i- 1] - theta[j - 1])))
+            lastValue.append((1/(2*np.pi) * (((Beta_ij[0][j] * np.cos(theta[0] - theta[j]) + (np.log((r_ij[0][j+1])/(r_ij[0][j]))) * np.sin(theta[0] - theta[j]))) + 
+                             ((Beta_ij[N - 1][j] * np.cos(theta[N - 1] - theta[j]) + (np.log((r_ij[N - 1][j+1])/(r_ij[N - 1][j]))) * np.sin(theta[N - 1] - theta[j]))))))
+        
+       
+
+    A_i_j_row.append(summ_value /(2*np.pi))
+
+    
+    summ_value = 0
 
 
-    A_i_j_row.append((np.log((r_ij[i - 1][j])/(r_ij[i - 1][j - 1])) * np.cos(theta[i - 1] - theta[j - 1])) + (Beta_ij[i - 1 ][j - 1] * np.sin(theta[i - 1] - theta[j - 1])))
+    if not sum(lastValue) == 0:
+        A_i_j_lastRow.append(sum(lastValue))
+
     A_i_j.append(A_i_j_row)
-    b_value = 2 * np.pi * Vinf* np.sin(theta[i - 1] - AoA)
-
-    A_i_j_row = []
-
-    if i == len(Beta_ij) - 1:
-        print(len(Beta_ij))
-        for k in range(0, len(Beta_ij)):
-
-            A_i_j_row.append((Beta_ij[i - 1][k - 1] * np.sin(theta[i - 1] - theta[k - 1]) - (np.log((r_ij[i - 1][k])/(r_ij[i- 1][k - 1]))) * np.cos(theta[i - 1] - theta[k - 1])))
-
-            if k == len(Beta_ij) - 1:
-                value = 0
-                for l in range(0, len(Beta_ij) - 1):
-
-                    value += (Beta_ij[i - 1][l - 1] * np.cos(theta[i - 1] - theta[l - 1]) + (np.log((r_ij[i - 1][l])/(r_ij[i- 1][l - 1]))) * np.sin(theta[i - 1] - theta[l - 1]))
-                    
-                b_value = - 2 * np.pi * Vinf* (np.cos(theta[i - 1] - AoA) + np.cos(theta[k - 1] - AoA))   
-                A_i_j_row.append(value)
-                
-        A_i_j.append(A_i_j_row)
-    b.append(b_value)
-
-b.append(-2 * np.pi * Vinf* (np.cos(theta[len(Beta_ij) -  1] - AoA) + np.cos(theta[len(Beta_ij) - 1] - AoA)))
+    
+    b.append(np.sin(theta[i] - AoA))
+A_i_j.append(A_i_j_lastRow)
 
 
+
+
+
+b.append(-(np.cos(theta[0] - AoA) + np.cos(theta[N - 1] - AoA)))
 
 
 A_i_j = np.array(A_i_j)
-# v_ss = np.array(v_ss)
-# u_vortex = np.array(u_vortex)
-# v_vortex = np.array(v_vortex)
+b = np.array(b)
+
+
+print(f"x: \n{x}")
+print(f"y: \n{y}")
+print(f"theta:\n{theta}")
+
+print(f"x_control: \n {x_control}")
+print(f"y_control: \n {y_control}")
+print(f"Beta_ij:\n{Beta_ij}")
+print(f"r_ij:\n{r_ij}")
+print(f"A:\n{A_i_j}")
+print(f"b: \n {b}")
+
 
 
 solution = np.linalg.solve(A_i_j, b)
@@ -138,8 +157,8 @@ for i in range(0 , len(A_i_j) - 1):
     summ_value = 0
 
     for j in range(0 , len(A_i_j) - 1):
-        summ_value += Gamma *((Beta_ij[i - 1][j - 1] * np.cos(theta[i - 1] - theta[j - 1])) +((np.sin(theta[i - 1] - theta[j - 1])) * (np.log((r_ij[i - 1][j])/(r_ij[i - 1][j - 1])))))
-        summ_value += q[j] * (Beta_ij[i - 1][j - 1] * np.sin(theta[i - 1] - theta[j - 1]) - ((np.cos(theta[i - 1] - theta[j - 1])) * (np.log((r_ij[i - 1][j])/(r_ij[i - 1][j - 1])))))
+        summ_value += Gamma *((Beta_ij[i][j] * np.cos(theta[i] - theta[j])) +((np.sin(theta[i] - theta[j])) * (np.log((r_ij[i][j])/(r_ij[i][j])))))
+        summ_value += q[j] * (Beta_ij[i][j] * np.sin(theta[i] - theta[j]) - ((np.cos(theta[i] - theta[j])) * (np.log((r_ij[i][j])/(r_ij[i][j])))))
     summ_value  *= 1 / (2 * np.pi)
 
 
@@ -148,53 +167,47 @@ for i in range(0 , len(A_i_j) - 1):
 
 
 
-# print(f"x: \n{x}")
-# print(f"theta:\n{theta}")
-
-print(f"x_control: \n {x_control}")
-# print(f"Beta_ij:\n{Beta_ij}")
-# print(f"r_ij:\n{r_ij}")
-print(f"A:\n{A_i_j}")
-print(f"b: \n {b}")
 
 print(f"q: \n {q}")
 print(f"Gamma: \n {Gamma}")
-# print(f"v_ss:\n{v_ss}")
 
 
-print(f"V_tang:\n{np.abs(V_tang)}")
 
-# normals = np.full_lile(x, 0)
-# tangents = np.full_like(x, 0)
-# for i in range(len(x) - 1):
-#     theta[i] = np.arctan2(y[i] - y[i+1], x[i] - x[i+1])
-#     normals[i] = -np.sin(theta[i]) + np.cos(theta[i]) * 1j
-#     tangents[i] = cos(theta[i]) + np.sin(theta[i]) * 1j
+print(f"V_tang:\n{V_tang}")
+
+
+
+cp = 1 - (V_tang / Vinf)**2
 
 
 
 
 
+fig, axs = plt.subplots(1,3)
 
 
 
-fig, axs = plt.subplots(2,2)
+axs[0].set_title("Airfoil")
+axs[0].plot(x, y)
+axs[0].plot(x_control, y_control, "o")
+axs[0].axis('equal')
+axs[0].grid(True)
 
 
+axs[1].set_title("cp")
+axs[1].plot(x_control, cp, "-o")
+axs[1].axis('equal')
+axs[1].grid(True)
+axs[1].invert_yaxis()
 
-axs[0,0].set_title("Airfoil")
-axs[0,0].plot(x, y)
-axs[0,0].plot(x_control, y_control, "o")
-axs[0,0].axis('equal')
-axs[0,0].grid(True)
+axs[2].set_title("V/Vinf")
+axs[2].plot(x_control, V_tang, "-o")
+axs[2].axis('equal')
+axs[2].grid(True)
+axs[2].invert_yaxis()
 
-
-axs[0,1].set_title("Airfoil flow")
-axs[0,1].plot(x_control, np.abs(V_tang / Vinf), "-o")
-axs[0,1].axis('equal')
-axs[0,1].grid(True)
-
-# Show the plot
+ 
+#Show the plot
 plt.show()
 
 
