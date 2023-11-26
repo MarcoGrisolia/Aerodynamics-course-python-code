@@ -224,11 +224,11 @@ class Functions():
 
         return X, Y, U, V
 
-    def simpleSource_Sink(self, constant = 1,  field_extension = 10, steps = 500j):
+    def simpleSource_Sink(self, constant = 1, x0=0, y0=0,  field_extension = 10, steps = 500j):
         
         x=symbols('x')
         y=symbols('y')
-        psiFunction = constant * atan(y/x)
+        psiFunction = constant * atan2(y-y0,x-x0)
    
         diff_U , diff_V = self.differentiateVelocityfrom_Psi(function= psiFunction)
 
@@ -276,7 +276,7 @@ class Functions():
         
         x=symbols('x')
         y=symbols('y')
-        phiFunction = gamma_over2pi * atan2(y - y0,x - x0)
+        phiFunction = gamma_over2pi * atan2(y - y0, x - x0)
    
         diff_U , diff_V = self.differentiateVelocityfrom_Phi(function= phiFunction)
 
